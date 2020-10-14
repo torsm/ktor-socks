@@ -5,17 +5,17 @@ import kotlinx.coroutines.Dispatchers
 import java.io.IOException
 
 
-fun CoroutineScope.socksServer(config: SOCKSConfig): SOCKSServer
+public fun CoroutineScope.socksServer(config: SOCKSConfig): SOCKSServer
         = SOCKSServer(config, coroutineContext)
 
-fun CoroutineScope.socksServer(block: SOCKSConfigBuilder.() -> Unit = {})
+public fun CoroutineScope.socksServer(block: SOCKSConfigBuilder.() -> Unit = {}): SOCKSServer
         = socksServer(SOCKSConfigBuilder().apply(block).build())
 
-fun socksServer(config: SOCKSConfig): SOCKSServer
+public fun socksServer(config: SOCKSConfig): SOCKSServer
         = SOCKSServer(config, Dispatchers.IO)
 
-fun socksServer(block: SOCKSConfigBuilder.() -> Unit = {})
+public fun socksServer(block: SOCKSConfigBuilder.() -> Unit = {}): SOCKSServer
         = socksServer(SOCKSConfigBuilder().apply(block).build())
 
 
-class SOCKSException(message: String, cause: Throwable? = null) : IOException(message, cause)
+public class SOCKSException(message: String, cause: Throwable? = null) : IOException(message, cause)

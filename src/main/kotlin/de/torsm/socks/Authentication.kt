@@ -4,21 +4,21 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 
 
-interface SOCKSAuthenticationMethod {
-    val code: Byte
+public interface SOCKSAuthenticationMethod {
+    public val code: Byte
 
-    suspend fun negotiate(reader: ByteReadChannel, writer: ByteWriteChannel)
+    public suspend fun negotiate(reader: ByteReadChannel, writer: ByteWriteChannel)
 }
 
 
-object NoAuthentication : SOCKSAuthenticationMethod {
+public object NoAuthentication : SOCKSAuthenticationMethod {
     override val code: Byte = 0
 
     override suspend fun negotiate(reader: ByteReadChannel, writer: ByteWriteChannel) {}
 }
 
 
-abstract class UsernamePasswordAuthentication : SOCKSAuthenticationMethod {
+public abstract class UsernamePasswordAuthentication : SOCKSAuthenticationMethod {
     override val code: Byte = 2
 
     override suspend fun negotiate(reader: ByteReadChannel, writer: ByteWriteChannel) {
@@ -48,9 +48,9 @@ abstract class UsernamePasswordAuthentication : SOCKSAuthenticationMethod {
         flush()
     }
 
-    abstract fun verify(username: String, password: String): Boolean
+    public abstract fun verify(username: String, password: String): Boolean
 
-    companion object {
+    private companion object {
         private const val VERSION = 1.toByte()
         private const val SUCCESS = 0.toByte()
         private const val FAILURE = 1.toByte()

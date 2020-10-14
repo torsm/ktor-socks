@@ -8,7 +8,7 @@ import java.net.InetAddress
 import java.nio.ByteBuffer
 
 
-val InetAddress.isSOCKS4a
+internal val InetAddress.isSOCKS4a: Boolean
     get() = when (this) {
         is Inet4Address -> {
             val address = address
@@ -23,7 +23,7 @@ val InetAddress.isSOCKS4a
 private val terminatorByte = ByteBuffer.wrap(byteArrayOf(0))
 
 
-suspend fun ByteReadChannel.readNullTerminatedString(bufferSize: Int = 1024): String {
+internal suspend fun ByteReadChannel.readNullTerminatedString(bufferSize: Int = 1024): String {
     val buffer = ByteBuffer.allocate(bufferSize)
     val builder = StringBuilder()
 
@@ -43,7 +43,7 @@ suspend fun ByteReadChannel.readNullTerminatedString(bufferSize: Int = 1024): St
 }
 
 
-inline fun <C : ReadWriteSocket, R> C.useWithChannels(block: (C, ByteReadChannel, ByteWriteChannel) -> R): R {
+internal inline fun <C : ReadWriteSocket, R> C.useWithChannels(block: (C, ByteReadChannel, ByteWriteChannel) -> R): R {
     val reader = openReadChannel()
     val writer = openWriteChannel()
     var cause: Throwable? = null

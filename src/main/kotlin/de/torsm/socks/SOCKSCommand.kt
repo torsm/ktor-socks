@@ -1,12 +1,12 @@
 package de.torsm.socks
 
-enum class SOCKSCommand(val code: Byte) {
+public enum class SOCKSCommand(public val code: Byte) {
     CONNECT(1),
     BIND(2),
     UDP_ASSOCIATE(3);
 
-    companion object {
-        fun byCode(code: Byte) = values().find { it.code == code }
+    public companion object {
+        public fun byCode(code: Byte): SOCKSCommand = values().find { it.code == code }
             ?: throw SOCKSException("Invalid SOCKS command: $code")
     }
 }

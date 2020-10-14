@@ -10,13 +10,14 @@ import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import kotlin.coroutines.CoroutineContext
 
-class SOCKSServer internal constructor(val config: SOCKSConfig, context: CoroutineContext): CoroutineScope {
+public class SOCKSServer internal constructor(private val config: SOCKSConfig, context: CoroutineContext): CoroutineScope {
     private val log = LoggerFactory.getLogger(javaClass)
     private val selector = ActorSelectorManager(Dispatchers.IO)
 
-    override val coroutineContext = context + SupervisorJob(context[Job]) + CoroutineName("socks-server")
+    override val coroutineContext: CoroutineContext
+            = context + SupervisorJob(context[Job]) + CoroutineName("socks-server")
 
-    fun start() {
+    public fun start() {
         val serverSocket = aSocket(selector).tcp().bind(config.networkAddress)
         log.info("Starting SOCKS proxy server on {}", serverSocket.localAddress)
 
