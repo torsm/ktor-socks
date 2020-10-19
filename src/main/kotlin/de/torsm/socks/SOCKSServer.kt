@@ -10,6 +10,16 @@ import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Listens on a server socket and accepts clients that want to use the SOCKS protocol.
+ *
+ * This implementation uses ktor's suspending sockets which are based on coroutines.
+ *
+ * When accepting a SOCKS5 client, this implementation selects the _first_ element in the list of [config]'s
+ * [authentication methods][SOCKSAuthenticationMethod] that the client supports.
+ *
+ * To create a [SOCKSServer], refer to the top level [socksServer] functions.
+ */
 public class SOCKSServer internal constructor(private val config: SOCKSConfig, context: CoroutineContext): CoroutineScope {
     private val log = LoggerFactory.getLogger(javaClass)
     private val selector = ActorSelectorManager(Dispatchers.IO)
@@ -17,6 +27,13 @@ public class SOCKSServer internal constructor(private val config: SOCKSConfig, c
     override val coroutineContext: CoroutineContext
             = context + SupervisorJob(context[Job]) + CoroutineName("socks-server")
 
+    /**
+     * Launches a coroutine that listens on the network address defined in [config] to accept clients, initiate
+     * handshakes, and relay traffic between the client and the host server.
+     *
+     * This method returns after launching the coroutine, but can be wrapped in a [runBlocking] call to block the
+     * thread if desired.
+     */
     public fun start() {
         val serverSocket = aSocket(selector).tcp().bind(config.networkAddress)
         log.info("Starting SOCKS proxy server on {}", serverSocket.localAddress)

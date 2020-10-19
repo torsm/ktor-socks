@@ -3,19 +3,36 @@ package de.torsm.socks
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
-
+/**
+ * Creates a [SOCKSServer] with the given [configuration][config], using the receiving [CoroutineScope]'s
+ * [CoroutineContext]
+ */
 public fun CoroutineScope.socksServer(config: SOCKSConfig): SOCKSServer
         = SOCKSServer(config, coroutineContext)
 
+/**
+ * Creates a [SOCKSServer] with the given configuration [block], using the receiving [CoroutineScope]'s
+ * [CoroutineContext]
+ */
 public fun CoroutineScope.socksServer(block: SOCKSConfigBuilder.() -> Unit = {}): SOCKSServer
-        = socksServer(SOCKSConfigBuilder().apply(block).build())
+        = SOCKSServer(SOCKSConfigBuilder().apply(block).build(), coroutineContext)
 
-public fun socksServer(config: SOCKSConfig): SOCKSServer
-        = SOCKSServer(config, Dispatchers.IO)
+/**
+ * Creates a [SOCKSServer] with the given [configuration][config] and [context]
+ */
+public fun socksServer(context: CoroutineContext = Dispatchers.IO, config: SOCKSConfig): SOCKSServer
+        = SOCKSServer(config, context)
 
-public fun socksServer(block: SOCKSConfigBuilder.() -> Unit = {}): SOCKSServer
-        = socksServer(SOCKSConfigBuilder().apply(block).build())
+/**
+ * Creates a [SOCKSServer] with the given configuration [block] and [context]
+ */
+public fun socksServer(context: CoroutineContext = Dispatchers.IO, block: SOCKSConfigBuilder.() -> Unit = {}): SOCKSServer
+        = SOCKSServer(SOCKSConfigBuilder().apply(block).build(), context)
 
 
+/**
+ * Represents any kind of protocol-level error
+ */
 public class SOCKSException(message: String, cause: Throwable? = null) : IOException(message, cause)
