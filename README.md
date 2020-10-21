@@ -27,7 +27,7 @@ fun main() {
 Calling `start` launches a coroutine that listens on a server socket, accepting clients and launching child-coroutines to negotiate the handshake and relay traffic between client and host. It will return immediately, but can be wrapped in `runBlocking` to block the thread while the server is running.
 
 ## Configuration
-Configuration of the socks server can be done with the `SOCKSConfigBuilder` block parameter of the `socksServer` functions.
+Configuration of the server can be done with the `SOCKSConfigBuilder` block parameter of the `socksServer` functions.
 
 Due to lack of authentication possibilities, the `allowSOCKS4` property can be used to block SOCKS4 clients. In that case, the server will respond with the result code `91` (request rejected or failed) to all SOCKS4 requests.
 
@@ -42,7 +42,7 @@ If no authentication methods are added, the builder will default to `NoAuthentic
 Doesn't have any subnegotiation and allows any client.
 
 #### `UsernamePasswordAuthentication`
-Abstract class that handles communication with the client. Create a subclass and implement the function `verify(username: String, password: String): Boolean` to verify clients agains a database of users for example.
+Abstract class that handles communication with the client. Create a subclass and implement the function `verify(username: String, password: String): Boolean` to verify clients against a database of users for example.
 
 ## Potential feature additions
 Connection callbacks could be used to implement some sort of blacklist/whitelist system for target hosts, which could go hand in hand with a `UsernamePasswordAuthentication` subclass which manages users of different usergroups with different sorts of privileges.
