@@ -18,7 +18,7 @@ fun main() {
     socksServer {
       allowSOCKS4 = false
       port = 8080
-      addAuthenticationMethod(
+      addAuthenticationMethod(...)
     }.start()
   }
 }
