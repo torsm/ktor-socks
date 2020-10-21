@@ -14,7 +14,7 @@ Missing details for full compliancy:
 ## Example
 ```kotlin
 fun main() {
-  runBlocking {
+  runBlocking(Dispatchers.IO) {
     socksServer {
       allowSOCKS4 = false
       port = 8080
