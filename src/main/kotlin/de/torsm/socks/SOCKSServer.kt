@@ -43,10 +43,10 @@ public class SOCKSServer internal constructor(private val config: SOCKSConfig, c
                 while (true) {
                     val clientSocket = serverSocket.accept()
                     val clientName = clientSocket.remoteAddress.toString()
-                    log.debug("Client connected: {}", clientName)
+                    log.trace("Client connected: {}", clientName)
 
                     launchClientJob(clientSocket).invokeOnCompletion {
-                        log.debug("Client disconnected: {}", clientName)
+                        log.trace("Client disconnected: {}", clientName)
                     }
                 }
             }
