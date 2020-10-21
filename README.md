@@ -24,7 +24,11 @@ fun main() {
 }
 ```
 
+Calling `start` launches a coroutine that listens on a server socket, accepting clients and launching child-coroutines to negotiate the handshake and relay traffic between client and host. It will return immediately, but can be wrapped in `runBlocking` to block the thread while the server is running.
+
 ## Configuration
+Configuration of the socks server can be done with the `SOCKSConfigBuilder` block parameter of the `socksServer` functions.
+
 Due to lack of authentication possibilities, the `allowSOCKS4` property can be used to block SOCKS4 clients. In that case, the server will respond with the result code `91` (request rejected or failed) to all SOCKS4 requests.
 
 To specify the address the server should bind to, either assign a `NetworkAddress` to the field `networkAddress`, or assign values to `hostname` and `port`. If left unspecified, the server will bind to `0.0.0.0:1080`.
