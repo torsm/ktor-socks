@@ -46,4 +46,3 @@ Abstract class that handles communication with the client. Create a subclass and
 
 ## Potential feature additions
 Connection callbacks could be used to implement some sort of blacklist/whitelist system for target hosts, which could go hand in hand with a `UsernamePasswordAuthentication` subclass which manages users of different usergroups with different sorts of privileges.
-Abstract class that handles communication with the client. Create a subclass and implement the function `verify(username: String, password: String): Boolean` to verify clients agains a database of users for example.
