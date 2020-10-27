@@ -10,6 +10,7 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeout
 import java.lang.Byte.toUnsignedInt
 import java.lang.Short.toUnsignedInt
 import java.net.Inet4Address
@@ -103,7 +104,9 @@ internal class SOCKSHandshake(
     private suspend fun connect(request: SOCKSRequest) {
         val host = InetSocketAddress(request.destinationAddress, request.port)
         val socket = try {
-            aSocket(selector).tcp().connect(host)
+            withTimeout(TIME_LIMIT) {
+                aSocket(selector).tcp().connect(host)
+            }
         } catch (e: Throwable) {
             sendReply(selectedVersion.unreachableHostCode)
             throw SOCKSException("Unreachable host: $host", e)
@@ -124,7 +127,14 @@ internal class SOCKSHandshake(
             val address = config.networkAddress.withPort(0)
             aSocket(selector).tcp().bind(address).use { serverSocket ->
                 val socketJob = async {
-                    serverSocket.accept()
+                    try {
+                        withTimeout(TIME_LIMIT) {
+                            serverSocket.accept()
+                        }
+                    } catch (e: Throwable) {
+                        sendReply(selectedVersion.unreachableHostCode)
+                        throw SOCKSException("Host (${request.destinationAddress}) didn't connect to bound socket (${serverSocket.localAddress})", e)
+                    }
                 }
 
                 sendReply(selectedVersion.successCode, serverSocket.localAddress as InetSocketAddress)
@@ -229,6 +239,7 @@ internal class SOCKSHandshake(
     )
 }
 
+private const val TIME_LIMIT = 120000.toLong()
 private const val SOCKS4_REJECTED = 91.toByte()
 private const val SOCKS5_RESERVED = 0.toByte()
 private const val SOCKS5_UNSUPPORTED_COMMAND = 7.toByte()

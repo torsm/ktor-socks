@@ -8,7 +8,6 @@ Missing details for full compliancy:
 - API support for USERID field in SOCKS4 requests
 - API support for encapsulating client traffic (based on authentication method)
 - UDP_ASSOCIATE command and UDP based clients
-- Put specified timeouts into place
 
 ## Example
 ```kotlin
