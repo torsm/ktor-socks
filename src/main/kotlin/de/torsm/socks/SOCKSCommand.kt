@@ -6,7 +6,7 @@ internal enum class SOCKSCommand(val code: Byte) {
     UDP_ASSOCIATE(3);
 
     companion object {
-        public fun byCode(code: Byte): SOCKSCommand = values().find { it.code == code }
+        fun byCode(code: Byte): SOCKSCommand = values().find { it.code == code }
             ?: throw SOCKSException("Invalid SOCKS command: $code")
     }
 }

@@ -4,19 +4,18 @@ import de.torsm.socks.SOCKSAddressType.*
 import de.torsm.socks.SOCKSCommand.*
 import de.torsm.socks.SOCKSVersion.SOCKS4
 import de.torsm.socks.SOCKSVersion.SOCKS5
-import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.Socket
-import io.ktor.network.sockets.aSocket
+import io.ktor.network.selector.*
+import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
-import io.ktor.utils.io.core.BytePacketBuilder
-import io.ktor.utils.io.core.readBytes
-import io.ktor.utils.io.core.writeFully
-import io.ktor.utils.io.core.writeShort
+import io.ktor.utils.io.core.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
 
+@Suppress("BlockingMethodInNonBlockingContext")
 internal class SOCKSHandshake(
     private val reader: ByteReadChannel,
     private val writer: ByteWriteChannel,
@@ -45,14 +44,9 @@ internal class SOCKSHandshake(
         val request = receiveRequest()
 
         when (request.command) {
-            CONNECT -> {
-                connect(request)
-            }
-            BIND -> {
-                TODO("Implement BIND requests")
-            }
+            CONNECT -> connect(request)
+            BIND -> bind(request)
             UDP_ASSOCIATE -> {
-                //TODO ?
                 check(selectedVersion == SOCKS5) { "SOCKS4 does not support $UDP_ASSOCIATE" }
                 sendReply(SOCKS5_UNSUPPORTED_COMMAND)
                 throw SOCKSException("Unsupported command: $UDP_ASSOCIATE")
@@ -116,6 +110,38 @@ internal class SOCKSHandshake(
         try {
             sendReply(selectedVersion.successCode, socket.localAddress as InetSocketAddress)
         } catch (e: Throwable) {
+            socket.close()
+            throw e
+        }
+
+        hostSocket = socket
+    }
+
+    private suspend fun bind(request: SOCKSRequest) {
+        val socket = coroutineScope {
+            val address = config.networkAddress.withPort(0)
+            aSocket(selector).tcp().bind(address).use { serverSocket ->
+                val socketJob = async {
+                    serverSocket.accept()
+                }
+
+                sendReply(selectedVersion.successCode, serverSocket.localAddress as InetSocketAddress)
+
+                socketJob.await()
+            }
+        }
+
+        val hostAddress = socket.remoteAddress as InetSocketAddress
+
+        if (hostAddress.address != request.destinationAddress) {
+            sendReply(selectedVersion.connectionRefusedCode)
+            socket.close()
+            throw SOCKSException("Incoming host address (${hostAddress.address}) did not match requested host (${request.destinationAddress})")
+        }
+
+        try {
+            sendReply(selectedVersion.successCode, hostAddress)
+        } catch (e: Exception) {
             socket.close()
             throw e
         }

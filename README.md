@@ -7,7 +7,6 @@ Missing details for full compliancy:
 - GSSAPI authenticaion method (only Username/Password authentication is implemented at this stage)
 - API support for USERID field in SOCKS4 requests
 - API support for encapsulating client traffic (based on authentication method)
-- BIND command
 - UDP_ASSOCIATE command and UDP based clients
 - Put specified timeouts into place
 

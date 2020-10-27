@@ -1,6 +1,7 @@
 package de.torsm.socks
 
 import io.ktor.util.network.*
+import java.net.InetSocketAddress
 
 /**
  * [SOCKSServer] configuration
@@ -12,7 +13,7 @@ import io.ktor.util.network.*
 public class SOCKSConfig(
     public val allowSOCKS4: Boolean,
     public val authenticationMethods: List<SOCKSAuthenticationMethod>,
-    public val networkAddress: NetworkAddress
+    public val networkAddress: InetSocketAddress
 )
 
 /**
@@ -30,7 +31,7 @@ public class SOCKSConfigBuilder {
 
     public var allowSOCKS4: Boolean = true
 
-    public var networkAddress: NetworkAddress? = null
+    public var networkAddress: InetSocketAddress? = null
 
     public var hostname: String = "0.0.0.0"
 
@@ -39,7 +40,7 @@ public class SOCKSConfigBuilder {
     public fun build(): SOCKSConfig = SOCKSConfig(
         allowSOCKS4,
         authenticationMethods.ifEmpty { mutableListOf(NoAuthentication) },
-        networkAddress ?: NetworkAddress(hostname, port)
+        networkAddress ?: InetSocketAddress(hostname, port)
     )
 }
 

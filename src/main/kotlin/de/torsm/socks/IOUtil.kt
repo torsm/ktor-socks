@@ -2,9 +2,9 @@ package de.torsm.socks
 
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
-import kotlinx.coroutines.flow.flow
 import java.net.Inet4Address
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 
 
@@ -43,9 +43,9 @@ internal suspend fun ByteReadChannel.readNullTerminatedString(bufferSize: Int = 
 }
 
 
-internal inline fun <C : ReadWriteSocket, R> C.useWithChannels(block: (C, ByteReadChannel, ByteWriteChannel) -> R): R {
+internal inline fun <C : ReadWriteSocket, R> C.useWithChannels(autoFlush: Boolean = false, block: (C, ByteReadChannel, ByteWriteChannel) -> R): R {
     val reader = openReadChannel()
-    val writer = openWriteChannel()
+    val writer = openWriteChannel(autoFlush)
     var cause: Throwable? = null
     return try {
         block(this, reader, writer)
@@ -58,3 +58,5 @@ internal inline fun <C : ReadWriteSocket, R> C.useWithChannels(block: (C, ByteRe
         close()
     }
 }
+
+internal fun InetSocketAddress.withPort(port: Int) = InetSocketAddress(address, port)
