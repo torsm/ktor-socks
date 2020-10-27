@@ -10,6 +10,8 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import java.lang.Byte.toUnsignedInt
+import java.lang.Short.toUnsignedInt
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
@@ -81,19 +83,19 @@ internal class SOCKSHandshake(
             }
         }
 
-        return SOCKSRequest(command, address, port.toInt())
+        return SOCKSRequest(command, address, toUnsignedInt(port))
     }
 
     private suspend fun handleAuthentication() {
-        val methodsCount = reader.readByte().toInt()
-        val clientMethods = List(methodsCount) { reader.readByte() }
+        val methodsCount = toUnsignedInt(reader.readByte())
+        val clientMethods = List(methodsCount) { toUnsignedInt(reader.readByte()) }
         val commonMethod = config.authenticationMethods.firstOrNull { it.code in clientMethods }
 
         if (commonMethod == null) {
             sendReply(SOCKS5_NO_ACCEPTABLE_METHODS)
             throw SOCKSException("No common authentication method found")
         } else {
-            sendReply(commonMethod.code)
+            sendReply(commonMethod.code.toByte())
             commonMethod.negotiate(reader, writer)
         }
     }
@@ -192,7 +194,7 @@ internal class SOCKSHandshake(
                 Inet6Address.getByAddress(data.readBytes())
             }
             HOSTNAME -> {
-                val size = readByte().toInt()
+                val size = toUnsignedInt(readByte())
                 val data = readPacket(size)
                 InetAddress.getByName(data.readBytes().decodeToString())
             }

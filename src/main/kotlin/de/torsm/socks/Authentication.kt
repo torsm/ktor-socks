@@ -2,6 +2,7 @@ package de.torsm.socks
 
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import java.lang.Byte.toUnsignedInt
 
 
 /**
@@ -11,7 +12,7 @@ public interface SOCKSAuthenticationMethod {
     /**
      * Number used to identify the authentication method used with the SOCKS protocol
      */
-    public val code: Byte
+    public val code: Int
 
     /**
      * After this authentication method was chosen by the server and client, this method is called and should handle
@@ -31,7 +32,7 @@ public interface SOCKSAuthenticationMethod {
  * negotiation.
  */
 public object NoAuthentication : SOCKSAuthenticationMethod {
-    override val code: Byte = 0
+    override val code: Int = 0
 
     override suspend fun negotiate(reader: ByteReadChannel, writer: ByteWriteChannel) {}
 }
@@ -46,7 +47,7 @@ public object NoAuthentication : SOCKSAuthenticationMethod {
  * For example, a subclass can be created which verifies the username/password combination against a database of users.
  */
 public abstract class UsernamePasswordAuthentication : SOCKSAuthenticationMethod {
-    override val code: Byte = 2
+    override val code: Int = 2
 
     /**
      * Implementations of this method should return `true` if the username/password combination is valid, and `false`
@@ -60,9 +61,9 @@ public abstract class UsernamePasswordAuthentication : SOCKSAuthenticationMethod
             throw SOCKSException("Invalid Username/Password authentication version: $version")
         }
 
-        val usernameSize = reader.readByte().toInt()
+        val usernameSize = toUnsignedInt(reader.readByte())
         val username = reader.readPacket(usernameSize).readBytes().decodeToString()
-        val passwordSize = reader.readByte().toInt()
+        val passwordSize = toUnsignedInt(reader.readByte())
         val password = reader.readPacket(passwordSize).readBytes().decodeToString()
 
         if (verify(username, password)) {
