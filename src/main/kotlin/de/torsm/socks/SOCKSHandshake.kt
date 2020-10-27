@@ -103,7 +103,7 @@ internal class SOCKSHandshake(
 
     private suspend fun connect(request: SOCKSRequest) {
         val host = InetSocketAddress(request.destinationAddress, request.port)
-        val socket = try {
+        hostSocket = try {
             withTimeout(TIME_LIMIT) {
                 aSocket(selector).tcp().connect(host)
             }
@@ -113,17 +113,15 @@ internal class SOCKSHandshake(
         }
 
         try {
-            sendReply(selectedVersion.successCode, socket.localAddress as InetSocketAddress)
+            sendReply(selectedVersion.successCode, hostSocket.localAddress as InetSocketAddress)
         } catch (e: Throwable) {
-            socket.close()
+            hostSocket.close()
             throw e
         }
-
-        hostSocket = socket
     }
 
     private suspend fun bind(request: SOCKSRequest) {
-        val socket = coroutineScope {
+        hostSocket = coroutineScope {
             val address = config.networkAddress.withPort(0)
             aSocket(selector).tcp().bind(address).use { serverSocket ->
                 val socketJob = async {
@@ -143,22 +141,20 @@ internal class SOCKSHandshake(
             }
         }
 
-        val hostAddress = socket.remoteAddress as InetSocketAddress
+        val hostAddress = hostSocket.remoteAddress as InetSocketAddress
 
         if (hostAddress.address != request.destinationAddress) {
             sendReply(selectedVersion.connectionRefusedCode)
-            socket.close()
+            hostSocket.close()
             throw SOCKSException("Incoming host address (${hostAddress.address}) did not match requested host (${request.destinationAddress})")
         }
 
         try {
             sendReply(selectedVersion.successCode, hostAddress)
         } catch (e: Exception) {
-            socket.close()
+            hostSocket.close()
             throw e
         }
-
-        hostSocket = socket
     }
 
     private suspend fun sendReply(code: Byte, writeAdditionalData: suspend BytePacketBuilder.() -> Unit = {}) {
