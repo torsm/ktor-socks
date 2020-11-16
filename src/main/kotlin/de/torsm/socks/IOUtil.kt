@@ -1,6 +1,7 @@
 package de.torsm.socks
 
 import io.ktor.network.sockets.*
+import io.ktor.util.cio.*
 import io.ktor.utils.io.*
 import java.net.Inet4Address
 import java.net.InetAddress
@@ -23,23 +24,27 @@ internal val InetAddress.isSOCKS4a: Boolean
 private val terminatorByte = ByteBuffer.wrap(byteArrayOf(0))
 
 
-internal suspend fun ByteReadChannel.readNullTerminatedString(bufferSize: Int = 1024): String {
-    val buffer = ByteBuffer.allocate(bufferSize)
-    val builder = StringBuilder()
+internal suspend fun ByteReadChannel.readNullTerminatedString(): String {
+    val buffer = KtorDefaultPool.borrow()
+    try {
+        val builder = StringBuilder()
 
-    while (true) {
-        val bytesRead = readUntilDelimiter(terminatorByte, buffer)
-        if (bytesRead == 0) break
+        while (true) {
+            val bytesRead = readUntilDelimiter(terminatorByte, buffer)
+            if (bytesRead == 0) break
 
-        val array = ByteArray(bytesRead)
-        buffer.position(0)
-        buffer.get(array)
-        buffer.clear()
+            val array = ByteArray(bytesRead)
+            buffer.position(0)
+            buffer.get(array)
+            buffer.clear()
 
-        builder.append(String(array))
+            builder.append(String(array))
+        }
+        skipDelimiter(terminatorByte)
+        return builder.toString()
+    } finally {
+        KtorDefaultPool.recycle(buffer)
     }
-    skipDelimiter(terminatorByte)
-    return builder.toString()
 }
 
 
