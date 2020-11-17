@@ -33,7 +33,7 @@ internal class SOCKSHandshake(
         when (selectedVersion) {
             SOCKS4 -> {
                 if (!config.allowSOCKS4) {
-                    sendReply(SOCKS4_REJECTED)
+                    sendFullReply(SOCKS4_REJECTED)
                     throw SOCKSException("SOCKS4 connection not allowed")
                 }
             }
@@ -51,7 +51,7 @@ internal class SOCKSHandshake(
             BIND -> bind(request)
             UDP_ASSOCIATE -> {
                 check(selectedVersion == SOCKS5) { "SOCKS4 does not support $UDP_ASSOCIATE" }
-                sendReply(SOCKS5_UNSUPPORTED_COMMAND)
+                sendFullReply(SOCKS5_UNSUPPORTED_COMMAND)
                 throw SOCKSException("Unsupported command: $UDP_ASSOCIATE")
             }
         }
@@ -93,10 +93,10 @@ internal class SOCKSHandshake(
         val commonMethod = config.authenticationMethods.firstOrNull { it.code in clientMethods }
 
         if (commonMethod == null) {
-            sendReply(SOCKS5_NO_ACCEPTABLE_METHODS)
+            sendPartialReply(SOCKS5_NO_ACCEPTABLE_METHODS)
             throw SOCKSException("No common authentication method found")
         } else {
-            sendReply(commonMethod.code.toByte())
+            sendPartialReply(commonMethod.code.toByte())
             commonMethod.negotiate(reader, writer)
         }
     }
@@ -108,12 +108,12 @@ internal class SOCKSHandshake(
                 aSocket(selector).tcp().connect(host)
             }
         } catch (e: Throwable) {
-            sendReply(selectedVersion.unreachableHostCode)
+            sendFullReply(selectedVersion.unreachableHostCode)
             throw SOCKSException("Unreachable host: $host", e)
         }
 
         try {
-            sendReply(selectedVersion.successCode, hostSocket.localAddress as InetSocketAddress)
+            sendFullReply(selectedVersion.successCode, hostSocket.localAddress as InetSocketAddress)
         } catch (e: Throwable) {
             hostSocket.close()
             throw e
@@ -130,13 +130,11 @@ internal class SOCKSHandshake(
                             serverSocket.accept()
                         }
                     } catch (e: Throwable) {
-                        sendReply(selectedVersion.unreachableHostCode)
+                        sendFullReply(selectedVersion.unreachableHostCode)
                         throw SOCKSException("Host (${request.destinationAddress}) didn't connect to bound socket (${serverSocket.localAddress})", e)
                     }
                 }
-
-                sendReply(selectedVersion.successCode, serverSocket.localAddress as InetSocketAddress)
-
+                sendFullReply(selectedVersion.successCode, serverSocket.localAddress as InetSocketAddress)
                 socketJob.await()
             }
         }
@@ -144,20 +142,20 @@ internal class SOCKSHandshake(
         val hostAddress = hostSocket.remoteAddress as InetSocketAddress
 
         if (hostAddress.address != request.destinationAddress) {
-            sendReply(selectedVersion.connectionRefusedCode)
+            sendFullReply(selectedVersion.connectionRefusedCode)
             hostSocket.close()
             throw SOCKSException("Incoming host address (${hostAddress.address}) did not match requested host (${request.destinationAddress})")
         }
 
         try {
-            sendReply(selectedVersion.successCode, hostAddress)
+            sendFullReply(selectedVersion.successCode, hostAddress)
         } catch (e: Exception) {
             hostSocket.close()
             throw e
         }
     }
 
-    private suspend fun sendReply(code: Byte, writeAdditionalData: suspend BytePacketBuilder.() -> Unit = {}) {
+    private suspend fun sendPartialReply(code: Byte, writeAdditionalData: suspend BytePacketBuilder.() -> Unit = {}) {
         writer.writePacket {
             writeByte(selectedVersion.replyVersion)
             writeByte(code)
@@ -166,8 +164,8 @@ internal class SOCKSHandshake(
         writer.flush()
     }
 
-    private suspend fun sendReply(code: Byte, address: InetSocketAddress) {
-        sendReply(code) {
+    private suspend fun sendFullReply(code: Byte, address: InetSocketAddress = emptyAddress) {
+        sendPartialReply(code) {
             if (selectedVersion == SOCKS5) writeByte(SOCKS5_RESERVED)
             writeAddress(address)
         }
@@ -240,3 +238,4 @@ private const val SOCKS4_REJECTED = 91.toByte()
 private const val SOCKS5_RESERVED = 0.toByte()
 private const val SOCKS5_UNSUPPORTED_COMMAND = 7.toByte()
 private const val SOCKS5_NO_ACCEPTABLE_METHODS = 0xFF.toByte()
+private val emptyAddress = InetSocketAddress(InetAddress.getByAddress(byteArrayOf(0, 0, 0, 0)), 0)
