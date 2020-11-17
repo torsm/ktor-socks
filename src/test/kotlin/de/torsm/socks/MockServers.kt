@@ -4,6 +4,7 @@ import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
 import org.junit.jupiter.api.extension.*
 import java.lang.Short.toUnsignedInt
 import java.lang.reflect.Method
@@ -20,13 +21,19 @@ class MockServers : InvocationInterceptor, BeforeAllCallback, AfterAllCallback {
     lateinit var job: Job
 
     override fun beforeAll(context: ExtensionContext) {
-        job = GlobalScope.launch {
-            launchProxyServer(context)
-            launchPingPongServer()
+        val mutex = Mutex(locked = true)
+        job = GlobalScope.launch(Dispatchers.IO) {
+            launch {
+                launchProxyServer(context)
+                launchPingPongServer(mutex)
+            }
+        }
+        runBlocking {
+            mutex.lock()
         }
     }
 
-    override fun afterAll(context: ExtensionContext?) {
+    override fun afterAll(context: ExtensionContext) {
         runBlocking {
             job.cancelAndJoin()
         }
@@ -64,10 +71,11 @@ class MockServers : InvocationInterceptor, BeforeAllCallback, AfterAllCallback {
         }
     }.start()
 
-    private suspend fun launchPingPongServer() {
+    private suspend fun launchPingPongServer(mutex: Mutex) {
         val socketBuilder = aSocket(ActorSelectorManager(Dispatchers.IO)).tcp()
 
         socketBuilder.bind(port = mockServer.port).use { serverSocket ->
+            mutex.unlock()
             while (true) {
                 val client = serverSocket.accept()
                 client.useWithChannels(true) { _, reader, writer ->
@@ -89,5 +97,4 @@ class MockServers : InvocationInterceptor, BeforeAllCallback, AfterAllCallback {
             }
         }
     }
-
 }
