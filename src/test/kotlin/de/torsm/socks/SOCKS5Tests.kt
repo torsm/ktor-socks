@@ -49,7 +49,7 @@ class SOCKS5Tests {
 
     @Test
     fun `Unreachable Host`() {
-        val unreachableHost = InetSocketAddress("google.com", 81)
+        val unreachableHost = mockServer.withPort(8081)
         createClientSocket(5).use { clientSocket ->
             assertFailsWith<SocketException> {
                 clientSocket.connect(unreachableHost)
