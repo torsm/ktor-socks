@@ -3,6 +3,7 @@ package de.torsm.socks
 import io.ktor.utils.io.core.*
 import io.ktor.utils.io.streams.*
 import org.junit.jupiter.api.extension.ExtendWith
+import java.net.Inet4Address
 import java.net.Socket
 import kotlin.io.use
 import kotlin.test.Test
@@ -44,6 +45,46 @@ class SOCKS4Tests {
 
             clientSocket.ping()
             clientSocket.assertPong()
+        }
+    }
+
+    @Test
+    fun `Bind Ping Pong`() {
+        // Java socket api does not support bind requests, even though they're implemented
+        createClientSocket(4).use { primarySocket ->
+            primarySocket.connect(mockServer)
+            val primaryOutput = primarySocket.getOutputStream().asOutput()
+
+            Socket().use { clientSocket ->
+                clientSocket.connect(proxyServer)
+                val proxyOutput = clientSocket.getOutputStream().asOutput()
+                val proxyInput = clientSocket.getInputStream()
+
+                proxyOutput.run {
+                    writeByte(4)                                    // protocol
+                    writeByte(2)                                    // bind
+                    writeShort(8080)                                // port
+                    writeFully(Inet4Address.getLocalHost().address) // expected ip
+                    writeByte(0)                                    // userid
+                    flush()
+                }
+                assertEquals(proxyInput.read(), 0)                  // protocol
+                assertEquals(proxyInput.read(), 90)                 // success
+                val address = proxyInput.readNBytes(6)              // port + ip
+
+                primaryOutput.run {
+                    writeText("bound\n")
+                    writeFully(address)
+                    flush()
+                }
+
+                assertEquals(proxyInput.read(), 0)                  // protocol
+                assertEquals(proxyInput.read(), 90)                 // success
+                proxyInput.readNBytes(6)                            // port + ip
+
+                clientSocket.ping()
+                clientSocket.assertPong()
+            }
         }
     }
 }
