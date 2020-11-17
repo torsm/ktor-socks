@@ -1,4 +1,4 @@
-# ktor-socks
+# ktor-socks [![Build Status](https://github.com/torsm/ktor-socks/workflows/Build/badge.svg)](https://github.com/Torsm/ktor-socks/actions)
 SOCKS (versions [4](http://ftp.icm.edu.pl/packages/socks/socks4/SOCKS4.protocol), [4a](https://www.openssh.com/txt/socks4a.protocol), [5](https://tools.ietf.org/html/rfc1928)) proxy server implementation using ktor's suspending sockets API
 
 This is not meant to be fully compliant with the specifications in every detail at this stage, but rather a working implementation that covers the practical use-cases for usual SOCKS proxy clients (like browsers).
