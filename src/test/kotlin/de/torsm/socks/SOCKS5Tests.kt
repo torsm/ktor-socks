@@ -36,4 +36,24 @@ class SOCKS5Tests {
             clientSocket.assertPong()
         }
     }
+
+    @Test
+    fun `Hostname Ping Pong`() {
+        val mockServer = InetSocketAddress.createUnresolved("localhost", mockServer.port)
+        createClientSocket(5).use { clientSocket ->
+            clientSocket.connect(mockServer)
+            clientSocket.ping()
+            clientSocket.assertPong()
+        }
+    }
+
+    @Test
+    fun `Unreachable Host`() {
+        val unreachableHost = InetSocketAddress("google.com", 81)
+        createClientSocket(5).use { clientSocket ->
+            assertFailsWith<SocketException> {
+                clientSocket.connect(unreachableHost)
+            }
+        }
+    }
 }
