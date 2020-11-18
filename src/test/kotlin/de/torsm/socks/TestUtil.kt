@@ -26,6 +26,6 @@ fun Socket.ping() {
 
 fun Socket.assertPong() {
     getInputStream().bufferedReader().run {
-        assertEquals(readLine(), "pong")
+        assertEquals("pong", readLine())
     }
 }

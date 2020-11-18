@@ -39,8 +39,8 @@ class SOCKS4Tests {
                 writeByte(0)                    //
                 flush()
             }
-            assertEquals(input.read(), 0)       // protocol
-            assertEquals(input.read(), 90)      // success
+            assertEquals(0, input.read())       // protocol
+            assertEquals(90, input.read())      // success
             input.readNBytes(6)                 // port + ip
 
             clientSocket.ping()
@@ -68,8 +68,8 @@ class SOCKS4Tests {
                     writeByte(0)                                    // userid
                     flush()
                 }
-                assertEquals(proxyInput.read(), 0)                  // protocol
-                assertEquals(proxyInput.read(), 90)                 // success
+                assertEquals(0, proxyInput.read())                  // protocol
+                assertEquals(90, proxyInput.read())                 // success
                 val address = proxyInput.readNBytes(6)              // port + ip
 
                 primaryOutput.run {
@@ -78,8 +78,8 @@ class SOCKS4Tests {
                     flush()
                 }
 
-                assertEquals(proxyInput.read(), 0)                  // protocol
-                assertEquals(proxyInput.read(), 90)                 // success
+                assertEquals(0, proxyInput.read())                  // protocol
+                assertEquals(90, proxyInput.read())                 // success
                 proxyInput.readNBytes(6)                            // port + ip
 
                 clientSocket.ping()
